@@ -1,14 +1,11 @@
 const express = require("express");
 const userRoutes = express.Router();
-const validation = require("../validation");
 
 //getting the models
 const models = require("../dataBase/models");
-const { user } = require("../dataBase/schemas");
 //Getting schema collection
 const userSchema = models.user;
 
-const datasArr = [];
 // send sample msg when entered
 userRoutes.get("/", async (req, res) => {
   res.send("Basic Curd Operation in Nodejs");
