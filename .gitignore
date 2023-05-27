@@ -128,3 +128,10 @@ dist
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
+
+
+# Ignore All (xlsx) files
+*.xlsx
+
+# Ignore All zip files
+*.zip

@@ -7,7 +7,7 @@ const productsSchema = models.products;
 const productsBulkUpload = async (req, res) => {
   try {
     //read file from its path
-    const file = xlsx.readFile(req.body.filePath);
+    const file = xlsx.readFile(req.file.path);
 
     //extract the data in sheet
     const sheet = file.Sheets[file.SheetNames[0]];
