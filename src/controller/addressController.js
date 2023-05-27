@@ -79,7 +79,7 @@ const getAddressListByUserId = async (req, res) => {
 
     return res.status(200).send({
       status: 200,
-      message: "Data fetched succesfully",
+      message: `Succesfully fetched Address List of ${user.name}`,
       data: addressList,
     });
   } catch (err) {
