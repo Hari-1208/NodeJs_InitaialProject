@@ -1,3 +1,3 @@
 module.exports = {
-  order: require("./orderValidator"),
+  orderValidator: require("./orderValidator"),
 };
