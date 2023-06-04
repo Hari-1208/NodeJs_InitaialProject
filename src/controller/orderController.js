@@ -1,5 +1,10 @@
 //getting the models
 const models = require("../dataBase/models");
+
+const { statusCodes, messages } = require("../configs");
+const { sendMail } = require("../mailService");
+const { ORDER_STATUS } = require("../constants");
+
 //Getting schema collection
 const orderSchema = models.order;
 const addressSchema = models.address;
@@ -60,19 +65,48 @@ class orderController {
         productIds: reqBody.productIds,
         addressDetails: address[0].address,
         orderDetails: orderDetails,
+        orderStatus: "PLACED",
       };
 
       const createdOrder = await orderSchema.create(newOrder);
       const user = await userSchema.findById(reqBody.userId);
-      return res.status(200).send({
-        status: 200,
-        message: `Hi ${user.name}, your order has been created succesfully.`,
+
+      // sending mail to customer mail id
+      const mailOptions = () => {
+        let orderDetails = createdOrder.orderDetails;
+        return {
+          subject: "Order placed succesfully",
+          to: user.emailId,
+          text: `Hi ${user.name},
+           Your order has been placed succesfully.Thanks for ordering!
+           
+           Order Details:-
+           Order Id : ${createdOrder._id}
+           Order Total: ₹${orderDetails?.orderTotal || ""}
+           Products Price: ₹${orderDetails?.productsPrice || ""}
+           Discount Price: ₹${orderDetails?.discountPrice || ""}
+           Price To Customer: ₹${orderDetails?.priceToCustomer || ""}
+           ${
+             Boolean(orderDetails?.couponDiscount)
+               ? "Coupon Discount : ₹" + orderDetails?.couponDiscount
+               : Boolean(orderDetails?.internalCashDiscount)
+               ? "Internal Cash Applied : ₹" +
+                 orderDetails?.internalCashDiscount
+               : ""
+           }`,
+        };
+      };
+      const sendMailResponce = await sendMail(mailOptions());
+
+      return res.status(statusCodes.HTTP_OK).send({
+        status: statusCodes.HTTP_OK,
+        message: `Hi ${user.name}, your order has been placed succesfully.`,
         data: createdOrder,
       });
     } catch (err) {
-      res.status(400).send({
-        status: 400,
-        message: "Bad Request",
+      res.status(statusCodes.HTTP_BAD_REQUEST).send({
+        status: statusCodes.HTTP_BAD_REQUEST,
+        message: messages[400],
         data: err.message,
       });
     }
@@ -135,18 +169,123 @@ class orderController {
         productIds: productIdsArray,
         addressDetails: order.addressDetails,
         orderDetails: orderDetails,
+        orderStatus: "PLACED",
       };
       const createdOrder = await orderSchema.create(newOrder);
       const user = await userSchema.findById(order.userId);
-      return res.status(200).send({
-        status: 200,
-        message: `Hi ${user.name}, your order has been created succesfully.`,
+
+      // sending mail to customer mail id
+      const mailOptions = () => {
+        let orderDetails = createdOrder.orderDetails;
+        return {
+          subject: "Order placed succesfully",
+          to: user.emailId,
+          text: `Hi ${user.name},
+           Your order has been placed succesfully.Thanks for ordering!
+           
+           Order Details:-
+           Order Id : ${createdOrder._id}
+           Order Total: ₹${orderDetails?.orderTotal || ""}
+           Products Price: ₹${orderDetails?.productsPrice || ""}
+           Discount Price: ₹${orderDetails?.discountPrice || ""}
+           Price To Customer: ₹${orderDetails?.priceToCustomer || ""}
+           ${
+             Boolean(orderDetails?.couponDiscount)
+               ? "Coupon Discount : ₹" + orderDetails?.couponDiscount
+               : Boolean(orderDetails?.internalCashDiscount)
+               ? "Internal Cash Applied : ₹" +
+                 orderDetails?.internalCashDiscount
+               : ""
+           }`,
+        };
+      };
+      const sendMailResponce = await sendMail(mailOptions());
+
+      return res.status(statusCodes.HTTP_OK).send({
+        status: statusCodes.HTTP_OK,
+        message: `Hi ${user.name}, your order has been placed succesfully.`,
         data: createdOrder,
       });
     } catch (err) {
-      res.status(400).send({
-        status: 400,
-        message: "Bad Request",
+      res.status(statusCodes.HTTP_BAD_REQUEST).send({
+        status: statusCodes.HTTP_BAD_REQUEST,
+        message: messages[400],
+        data: err.message,
+      });
+    }
+  };
+
+  static updateOrderStatus = async (req, res, next) => {
+    try {
+      const reqBody = req.body;
+
+      // get the order and user data for the passed id
+      const order = await orderSchema.findById(reqBody.orderId);
+      const user = await userSchema.findById(order.userId);
+
+      // new datas to update the order
+      const newValues = {
+        orderStatus: reqBody.orderStatus,
+      };
+
+      // order status texts and updates
+      const texts = {};
+      const commonPrefix = `Your order of order id "${order._id}"`;
+      switch (reqBody.orderStatus) {
+        case ORDER_STATUS[0]:
+          newValues.confirmedAt = new Date();
+          texts.title = reqBody.orderStatus;
+          texts.disc = `${commonPrefix} has been confirmed succesfully.`;
+          break;
+        case ORDER_STATUS[1]:
+          newValues.shippedAt = new Date();
+          texts.title = "shipped";
+          texts.disc = `${commonPrefix} has been shipped succesfully will be delivered soon!`;
+          break;
+        case ORDER_STATUS[2]:
+          newValues.deliveredAt = new Date();
+          texts.title = reqBody.orderStatus;
+          texts.disc = `${commonPrefix} has been delivered succesfully.\n Thanks for ordering and continue shopping with us!`;
+          break;
+        case ORDER_STATUS[3]:
+          newValues.processingStartedAt = new Date();
+          texts.title = reqBody.orderStatus;
+          texts.disc = `${commonPrefix} is under processing will be verfied and shipped soon!.`;
+          break;
+      }
+
+      // update item
+      orderSchema
+        .findByIdAndUpdate(reqBody.orderId, newValues)
+        .then(async (response) => {
+          // sending mail to customer mail id
+          const mailOptions = () => {
+            return {
+              subject: `Order ${texts?.title?.toLowerCase() || ""}`,
+              to: user.emailId,
+              text: `Hi ${user.name},
+              ${texts?.disc || ""}`,
+            };
+          };
+          const sendMailResponce = await sendMail(mailOptions());
+
+          return res.status(statusCodes.HTTP_OK).send({
+            status: statusCodes.HTTP_OK,
+            message: messages.orderStatusUpdated,
+          });
+        })
+        .catch((err) => {
+          if (err) {
+            return res.status(statusCodes.HTTP_BAD_REQUEST).send({
+              message: "error",
+              data: err,
+            });
+          }
+        });
+    } catch (err) {
+      res.status(statusCodes.HTTP_BAD_REQUEST).send({
+        status: statusCodes.HTTP_BAD_REQUEST,
+        message: messages[400],
         data: err.message,
       });
     }

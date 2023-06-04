@@ -1,6 +1,9 @@
 const Joi = require("joi");
 //getting the models
 const models = require("../dataBase/models");
+const { statusCodes, messages } = require("../configs");
+const { ORDER_STATUS } = require("../constants");
+
 //Getting schema collection
 const orderSchema = models.order;
 const addressSchema = models.address;
@@ -119,6 +122,80 @@ class orderValidator {
       return next();
     } catch (error) {
       res.status(422).json({ status: 422, error: error.message });
+    }
+  };
+
+  static updateOrderStatus = async (req, res, next) => {
+    try {
+      // initailize schema with joi
+      const schema = Joi.object().keys({
+        orderId: Joi.string().required(),
+        orderStatus: Joi.string().required(),
+      });
+
+      const reqBody = req.body;
+
+      //validate the schema with joi
+      const { error } = schema.validate(reqBody);
+
+      //if error occured return error
+      if (error) {
+        const { details } = error;
+        const message = details.map((i) => i.message).join(",");
+        return res
+          .status(statusCodes.HTTP_BAD_REQUEST)
+          .json({ status: statusCodes.HTTP_BAD_REQUEST, error: message });
+      }
+
+      //check order is exist
+      const order = await orderSchema.findById(reqBody.orderId);
+      if (!order)
+        return res.status(statusCodes.HTTP_NOT_FOUND).json({
+          status: statusCodes.HTTP_NOT_FOUND,
+          message: messages.orderNotFoundForId,
+        });
+
+      // check passed order status is valid
+      if (!ORDER_STATUS.includes(reqBody.orderStatus))
+        return res.status(statusCodes.HTTP_UNPROCESSABLE_ENTITY).json({
+          status: statusCodes.HTTP_UNPROCESSABLE_ENTITY,
+          message: messages.invalidOrderStatus,
+        });
+
+      // check the status is updating in proper steps
+      switch (true) {
+        case Boolean(order?.deliveredAt):
+          return res.status(statusCodes.HTTP_BAD_REQUEST).json({
+            status: statusCodes.HTTP_BAD_REQUEST,
+            message: messages.orderAlredyDelivered,
+          });
+        case reqBody.orderStatus == ORDER_STATUS[3] &&
+          !Boolean(order?.confirmedAt):
+          return res.status(statusCodes.HTTP_BAD_REQUEST).json({
+            status: statusCodes.HTTP_BAD_REQUEST,
+            message: messages.orderNeedsToBeConfirmed,
+          });
+        case reqBody.orderStatus == ORDER_STATUS[1] &&
+          !Boolean(order?.processingStartedAt):
+          return res.status(statusCodes.HTTP_BAD_REQUEST).json({
+            status: statusCodes.HTTP_BAD_REQUEST,
+            message: messages.orderNeedsToBeProcssed,
+          });
+        case reqBody.orderStatus == ORDER_STATUS[2] &&
+          !Boolean(order?.shippedAt):
+          return res.status(statusCodes.HTTP_BAD_REQUEST).json({
+            status: statusCodes.HTTP_BAD_REQUEST,
+            message: messages.orderNeedsToBePicked,
+          });
+      }
+
+      // all the valdiation are completed... jumping to next handler
+      return next();
+    } catch (error) {
+      res.status(statusCodes.HTTP_UNPROCESSABLE_ENTITY).json({
+        status: statusCodes.HTTP_UNPROCESSABLE_ENTITY,
+        error: error.message,
+      });
     }
   };
 }

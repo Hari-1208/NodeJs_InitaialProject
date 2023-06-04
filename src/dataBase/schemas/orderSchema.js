@@ -12,6 +12,21 @@ module.exports = new Schema(
       type: Schema.Types.ObjectId,
       required: true,
     },
+    orderStatus: {
+      type: String,
+    },
+    confirmedAt: {
+      type: Date,
+    },
+    shippedAt: {
+      type: Date,
+    },
+    deliveredAt: {
+      type: Date,
+    },
+    processingStartedAt: {
+      type: Date,
+    },
 
     //address for the order
     addressDetails: {

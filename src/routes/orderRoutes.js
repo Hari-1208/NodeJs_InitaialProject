@@ -20,5 +20,11 @@ orderRoutes.post(
   orderValidator.reOrder,
   orderController.reOrder
 );
+//update order status from admin
+orderRoutes.put(
+  "/api/admin/updateOrderStatus",
+  orderValidator.updateOrderStatus,
+  orderController.updateOrderStatus
+);
 
 module.exports = orderRoutes;
