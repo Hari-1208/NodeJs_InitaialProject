@@ -3,7 +3,7 @@ const models = require("../dataBase/models");
 
 const { statusCodes, messages } = require("../configs");
 const { sendMail } = require("../mailService");
-const { ORDER_STATUS } = require("../constants");
+const { ORDER_STATUS, Html } = require("../constants");
 
 //Getting schema collection
 const orderSchema = models.order;
@@ -74,19 +74,20 @@ class orderController {
       // sending mail to customer mail id
       const mailOptions = () => {
         let orderDetails = createdOrder.orderDetails;
-        return {
+
+        //data for html content
+        let htmlData = {
+          title: "Node Email Service",
+          name: user.name,
           subject: "Order placed succesfully",
-          to: user.emailId,
-          text: `Hi ${user.name},
-           Your order has been placed succesfully.Thanks for ordering!
-           
-           Order Details:-
-           Order Id : ${createdOrder._id}
-           Order Total: ₹${orderDetails?.orderTotal || ""}
-           Products Price: ₹${orderDetails?.productsPrice || ""}
-           Discount Price: ₹${orderDetails?.discountPrice || ""}
-           Price To Customer: ₹${orderDetails?.priceToCustomer || ""}
-           ${
+          content: `Your order has been placed succesfully.Thanks for ordering!
+           \nOrder Details:-
+           \nOrder Id : ${createdOrder._id}
+           \nOrder Total: ₹${orderDetails?.orderTotal || ""}
+           \nProducts Price: ₹${orderDetails?.productsPrice || ""}
+           \nDiscount Price: ₹${orderDetails?.discountPrice || ""}
+           \nPrice To Customer: ₹${orderDetails?.priceToCustomer || ""}
+           \n${
              Boolean(orderDetails?.couponDiscount)
                ? "Coupon Discount : ₹" + orderDetails?.couponDiscount
                : Boolean(orderDetails?.internalCashDiscount)
@@ -94,6 +95,11 @@ class orderController {
                  orderDetails?.internalCashDiscount
                : ""
            }`,
+        };
+        return {
+          subject: "Order placed succesfully",
+          to: user.emailId,
+          html: Html(htmlData),
         };
       };
       const sendMailResponce = await sendMail(mailOptions());
@@ -177,19 +183,20 @@ class orderController {
       // sending mail to customer mail id
       const mailOptions = () => {
         let orderDetails = createdOrder.orderDetails;
-        return {
+
+        //data for html content
+        let htmlData = {
+          title: "Node Email Service",
+          name: user.name,
           subject: "Order placed succesfully",
-          to: user.emailId,
-          text: `Hi ${user.name},
-           Your order has been placed succesfully.Thanks for ordering!
-           
-           Order Details:-
-           Order Id : ${createdOrder._id}
-           Order Total: ₹${orderDetails?.orderTotal || ""}
-           Products Price: ₹${orderDetails?.productsPrice || ""}
-           Discount Price: ₹${orderDetails?.discountPrice || ""}
-           Price To Customer: ₹${orderDetails?.priceToCustomer || ""}
-           ${
+          content: `Your order has been placed succesfully.Thanks for ordering!
+           \nOrder Details:-
+           \nOrder Id : ${createdOrder._id}
+           \nOrder Total: ₹${orderDetails?.orderTotal || ""}
+           \nProducts Price: ₹${orderDetails?.productsPrice || ""}
+           \nDiscount Price: ₹${orderDetails?.discountPrice || ""}
+           \nPrice To Customer: ₹${orderDetails?.priceToCustomer || ""}
+           \n${
              Boolean(orderDetails?.couponDiscount)
                ? "Coupon Discount : ₹" + orderDetails?.couponDiscount
                : Boolean(orderDetails?.internalCashDiscount)
@@ -197,6 +204,11 @@ class orderController {
                  orderDetails?.internalCashDiscount
                : ""
            }`,
+        };
+        return {
+          subject: "Order placed succesfully",
+          to: user.emailId,
+          html: Html(htmlData),
         };
       };
       const sendMailResponce = await sendMail(mailOptions());
@@ -235,7 +247,7 @@ class orderController {
         case ORDER_STATUS[0]:
           newValues.confirmedAt = new Date();
           texts.title = reqBody.orderStatus;
-          texts.disc = `${commonPrefix} has been confirmed succesfully.`;
+          texts.disc = `${commonPrefix} has been confirmed succesfully`;
           break;
         case ORDER_STATUS[1]:
           newValues.shippedAt = new Date();
@@ -250,9 +262,17 @@ class orderController {
         case ORDER_STATUS[3]:
           newValues.processingStartedAt = new Date();
           texts.title = reqBody.orderStatus;
-          texts.disc = `${commonPrefix} is under processing will be verfied and shipped soon!.`;
+          texts.disc = `${commonPrefix} is under processing will be verfied and shipped soon!`;
           break;
       }
+
+      //data for html content
+      let htmlData = {
+        title: "Node Email Service",
+        name: user.name,
+        subject: `Order ${texts?.title?.toLowerCase() || ""}`,
+        content: texts?.disc,
+      };
 
       // update item
       orderSchema
@@ -263,8 +283,7 @@ class orderController {
             return {
               subject: `Order ${texts?.title?.toLowerCase() || ""}`,
               to: user.emailId,
-              text: `Hi ${user.name},
-              ${texts?.disc || ""}`,
+              html: Html(htmlData),
             };
           };
           const sendMailResponce = await sendMail(mailOptions());
