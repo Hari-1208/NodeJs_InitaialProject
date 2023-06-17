@@ -26,5 +26,11 @@ orderRoutes.put(
   orderValidator.updateOrderStatus,
   orderController.updateOrderStatus
 );
+//download order info
+orderRoutes.get(
+  "/api/downloadOrderInfo",
+  orderValidator.downloadOrderInfo,
+  orderController.downloadOrderInfo
+);
 
 module.exports = orderRoutes;

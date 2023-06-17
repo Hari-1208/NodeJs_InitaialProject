@@ -198,6 +198,45 @@ class orderValidator {
       });
     }
   };
+
+  static downloadOrderInfo = async (req, res, next) => {
+    try {
+      // initailize schema with joi
+      const schema = Joi.object().keys({
+        orderId: Joi.string().required(),
+      });
+
+      const reqBody = req.body;
+
+      //validate the schema with joi
+      const { error } = schema.validate(reqBody);
+
+      //if error occured return error
+      if (error) {
+        const { details } = error;
+        const message = details.map((i) => i.message).join(",");
+        return res
+          .status(statusCodes.HTTP_BAD_REQUEST)
+          .json({ status: statusCodes.HTTP_BAD_REQUEST, error: message });
+      }
+
+      //check order is exist
+      const order = await orderSchema.findById(reqBody.orderId);
+      if (!order)
+        return res.status(statusCodes.HTTP_NOT_FOUND).json({
+          status: statusCodes.HTTP_NOT_FOUND,
+          message: messages.orderNotFoundForId,
+        });
+
+      // all the valdiation are completed... jumping to next handler
+      return next();
+    } catch (error) {
+      res.status(statusCodes.HTTP_UNPROCESSABLE_ENTITY).json({
+        status: statusCodes.HTTP_UNPROCESSABLE_ENTITY,
+        error: error.message,
+      });
+    }
+  };
 }
 
 module.exports = orderValidator;
