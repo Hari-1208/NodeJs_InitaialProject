@@ -50,8 +50,8 @@ class userController {
     const newUser = new userSchema({
       name: req.body.name,
       mobileNumber: req.body.mobileNumber,
-      dob: req.body.dob,
       emailId: req.body.emailId,
+      password: req.body.password,
     });
 
     try {
@@ -147,6 +147,42 @@ class userController {
             });
           }
         });
+    } catch (err) {
+      res.status(400).send({
+        message: "error",
+        data: err.message,
+      });
+    }
+  };
+
+  static loginUser = async (req, res) => {
+    try {
+      const dbData = await userSchema.find();
+      let filteredItem = dbData.find((item) => {
+        if (item.emailId === req.body.emailId) {
+          return item;
+        }
+      });
+
+      if (Boolean(filteredItem)) {
+        if (filteredItem.password === req.body.password) {
+          res.status(200).send({
+            status: 200,
+            message: "User logged in succesfully",
+            data: filteredItem,
+          });
+        } else {
+          return res.status(400).send({
+            status: 400,
+            message: "Invaild password!",
+          });
+        }
+      } else {
+        return res.status(404).send({
+          status: 404,
+          message: "User with given email id is not fuond!",
+        });
+      }
     } catch (err) {
       res.status(400).send({
         message: "error",

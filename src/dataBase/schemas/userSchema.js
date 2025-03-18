@@ -22,9 +22,11 @@ module.exports = new Schema(
       required: true,
       unique: true,
     },
-    dob: {
+    password: {
       type: String,
       required: true,
+      trim: true,
+      minlength: 6,
     },
   },
   { timestamps: true }

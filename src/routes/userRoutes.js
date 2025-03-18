@@ -18,6 +18,8 @@ userRoutes.post("/api/addData", userController.addNewUser);
 userRoutes.put("/api/updateData/:id", userController.updateUser);
 // delete method to delete item by id
 userRoutes.delete("/api/deleteData/:id", userController.deleteUser);
+// login user
+userRoutes.post("/api/login", userController.loginUser);
 
 //address routes ----------------------------
 //add new address for user
