@@ -49,7 +49,6 @@ class userController {
   static addNewUser = async (req, res) => {
     const newUser = new userSchema({
       name: req.body.name,
-      mobileNumber: req.body.mobileNumber,
       emailId: req.body.emailId,
       password: req.body.password,
     });
@@ -58,10 +57,7 @@ class userController {
       const dbData = await userSchema.find();
 
       let filteredItem = dbData.find((item) => {
-        if (
-          parseInt(item.mobileNumber) === parseInt(req.body.mobileNumber) ||
-          item.emailId === req.body.emailId
-        ) {
+        if (item.emailId === req.body.emailId) {
           return item;
         }
       });

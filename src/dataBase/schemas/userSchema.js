@@ -3,14 +3,6 @@ const Schema = mongoose.Schema;
 
 module.exports = new Schema(
   {
-    mobileNumber: {
-      type: String,
-      required: true,
-      trim: true,
-      index: true,
-      minlength: 10,
-      unique: true,
-    },
     name: {
       type: String,
       trim: true,
