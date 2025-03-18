@@ -50,7 +50,7 @@ class userController {
     const newUser = new userSchema({
       name: req.body.name,
       mobileNumber: req.body.mobileNumber,
-      dob: req.body.mobileNumber,
+      dob: req.body.dob,
       emailId: req.body.emailId,
     });
 
